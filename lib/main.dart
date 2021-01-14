@@ -204,9 +204,9 @@ class LandingPage extends State<MyApp> {
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,
                 primary: false,
-                padding: const EdgeInsets.all(10),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                padding: const EdgeInsets.all(15),
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
                 crossAxisCount: 2,
                 children: <Widget>[
                   InkWell(
@@ -217,7 +217,7 @@ class LandingPage extends State<MyApp> {
                       );
                     }, // Handle your callback
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage("assets/images/pushup.png"),
@@ -236,12 +236,12 @@ class LandingPage extends State<MyApp> {
                       );
                     }, // Handle your callback
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage("assets/images/squat.png"),
                           fit: BoxFit.fitWidth,
-                          alignment: Alignment.topCenter,
+                          alignment: Alignment.bottomCenter,
                         ),
                       ),
                       child: Text("Squats"),
@@ -255,7 +255,7 @@ class LandingPage extends State<MyApp> {
                       );
                     }, // Handle your callback
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage("assets/images/crunch.png"),
@@ -274,7 +274,7 @@ class LandingPage extends State<MyApp> {
                       );
                     }, // Handle your callback
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage("assets/images/crunch up.png"),
@@ -322,8 +322,6 @@ class BodyWidgetState extends State<BodyWidget>
   var previousTime;
   StreamSubscription subscription;
   bool listening = false;
-  Color counterBackgroundColor = Colors.cyan[700];
-  String counterText = "";
 
   void listenToSensors() async {
     if (!listening) {
@@ -339,21 +337,15 @@ class BodyWidgetState extends State<BodyWidget>
 
   void stopListening() {
     if (listening) {
-      subscription.cancel();
-      timings.clear();
+      //subscription.cancel();
       _pushups = 0;
-      avgSpots.clear();
+      listening = false;
     }
   }
 
-  List<int> werte = [];
-
   void checkSpeed(int value) {
     if (value > optimalSpeed) {
-      setState(() {
-        counterBackgroundColor = Colors.deepOrangeAccent;
-        counterText = "\nToo Fast";
-      });
+      setState(() {});
     }
   }
 
@@ -418,17 +410,16 @@ class BodyWidgetState extends State<BodyWidget>
     return Container(
       padding: EdgeInsets.all(50),
       child: ButtonTheme(
-        buttonColor: counterBackgroundColor,
+        buttonColor: Colors.cyan[700],
         textTheme: ButtonTextTheme.primary,
         minWidth: width * 0.75,
         height: height * 0.5,
         child: RaisedButton(
           onPressed: () {
             _add();
-            listenToSensors();
           },
           child: Text(
-            '${_pushups}' + counterText,
+            '${_pushups}',
             style: TextStyle(fontSize: 25),
           ),
         ),
@@ -437,10 +428,11 @@ class BodyWidgetState extends State<BodyWidget>
   }
 
   void _add() {
-    counterBackgroundColor = Colors.cyan[700];
-    counterText = "";
     if (_pushups == 0) {
-      listenToSensors();
+      //listenToSensors();
+      timings.clear();
+      spots.clear();
+      avgSpots.clear();
       previousTime = new DateTime.now();
     } else {
       var now = DateTime.now();
@@ -463,11 +455,10 @@ class BodyWidgetState extends State<BodyWidget>
   int length;
 
   Widget getStatsContainer() {
-    double averageTiming = 0;
-    LineChart chart;
     if (timings.isNotEmpty) {
       List<int> xAxis = new List<int>.generate(timings.length, (i) => i + 1);
       length = timings.length;
+      spots.clear();
       for (int i = 0; i < timings.length; i++) {
         if (timings[i] / 1000 < 10.0) {
           spots.add(new FlSpot(
@@ -656,6 +647,7 @@ class BodyWidgetState extends State<BodyWidget>
   LineChartData avgData() {
     double averageTiming = timings.reduce((a, b) => a + b) / timings.length;
     List<int> xAxis = new List<int>.generate(timings.length, (i) => i + 1);
+    avgSpots.clear();
     for (int i = 0; i < timings.length; i++) {
       avgSpots.add(new FlSpot(xAxis[i].toDouble() - 1,
           double.parse((averageTiming / 1000).toStringAsPrecision(2))));
@@ -663,6 +655,7 @@ class BodyWidgetState extends State<BodyWidget>
     return LineChartData(
       gridData: FlGridData(
         show: true,
+        drawVerticalLine: true,
         drawHorizontalLine: true,
         getDrawingVerticalLine: (value) {
           return FlLine(
