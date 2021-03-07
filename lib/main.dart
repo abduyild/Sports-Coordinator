@@ -315,7 +315,7 @@ class BodyWidget extends StatefulWidget {
 class BodyWidgetState extends State<BodyWidget>
     with SingleTickerProviderStateMixin<BodyWidget> {
   SportState selectedWidgetMarker = SportState.pushUp;
-  final int optimalSpeed = 8000;
+  final int optimalSpeed = 2800;
 
   int _pushups = 0;
   List<int> timings = [];
@@ -343,9 +343,14 @@ class BodyWidgetState extends State<BodyWidget>
     }
   }
 
+  Color counterBackgroundColor = Colors.cyan[700];
+  String counterText = "";
   void checkSpeed(int value) {
     if (value > optimalSpeed) {
-      setState(() {});
+      setState(() {
+        counterBackgroundColor = Colors.deepOrangeAccent;
+        counterText = "\nToo Fast";
+      });
     }
   }
 
@@ -410,7 +415,7 @@ class BodyWidgetState extends State<BodyWidget>
     return Container(
       padding: EdgeInsets.all(50),
       child: ButtonTheme(
-        buttonColor: Colors.cyan[700],
+        buttonColor: counterBackgroundColor,
         textTheme: ButtonTextTheme.primary,
         minWidth: width * 0.75,
         height: height * 0.5,
@@ -419,7 +424,7 @@ class BodyWidgetState extends State<BodyWidget>
             _add();
           },
           child: Text(
-            '${_pushups}',
+            '${_pushups}' + counterText,
             style: TextStyle(fontSize: 25),
           ),
         ),
@@ -427,8 +432,79 @@ class BodyWidgetState extends State<BodyWidget>
     );
   }
 
+
+
+
+  double calculateThreshold(YaccMax, YaccMin, Yavg) {
+    double upperDifference = YaccMax - Yavg;
+    double lowerDifference = Yavg - YaccMin;
+    if(upperDifference > lowerDifference) {
+      return (3/4) * upperDifference;
+    } else {
+      return (3/4) * lowerDifference;
+    }
+  }
+
+  int getMin(List<int> Yacc) {
+    int min = Yacc[0];
+    for(int i = 1; i < Yacc.length; i++) {
+      if(min > Yacc[i]){
+        min = Yacc[i];
+      }
+    }
+    return min;
+  }
+
+  int getMax(List<int> Yacc) {
+    int max = Yacc[0];
+    for(int i = 1; i < Yacc.length; i++) {
+      if(max < Yacc[i]){
+        max = Yacc[i];
+      }
+    }
+    return max;
+  }
+
+
+  double getAvg(List<int> Yacc) {
+    double avg = 0;
+    Yacc.length != 0 ? avg =  Yacc.reduce((a, b) => a + b) / Yacc.length : avg =  0;
+    return avg;
+  }
+
+  String _event = '';
+  List<int> Yacc = [];
+  void _startListenToSensorEvents() async {
+    if (!listening) {
+      subscription = ESenseManager.sensorEvents.listen((event) {
+        List<int> acc = event.accel;
+        Yacc.add(acc[1]);
+        /*
+        print("average Y accelleration: ${getAvg(Yacc)}");
+        print("max Y accelleration: ${getMax(Yacc)}");
+        print("min Y accelleration: ${getMin(Yacc)}");*/
+        print("try this value as a threshold: ${calculateThreshold(getMax(Yacc),getMin(Yacc),getAvg(Yacc))}");
+        List<int> gyro = event.gyro;
+
+        //print('SENSOR event: $event');
+        checkSpeed(acc[1]);
+        setState(() {
+          print(acc);
+          print(gyro);
+          _event = event.toString();
+        });
+      });
+      listening = true;
+    }
+  }
+
+
+
   void _add() {
+    counterBackgroundColor = Colors.cyan[700];
+    counterText = "";
     if (_pushups == 0) {
+      _startListenToSensorEvents();
       //listenToSensors();
       timings.clear();
       spots.clear();
