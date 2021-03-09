@@ -1,6 +1,6 @@
-# flutter_app
+# Sports Coordinator
 
-A new Flutter application.
+An application that motivates you to make better reps for your favourite sports including PushUps and Squats.
 
 ## Getting Started
 
